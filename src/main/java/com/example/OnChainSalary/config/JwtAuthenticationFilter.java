@@ -21,7 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("doFilterInternal acionadoo");
+
 
         // Não verifica o token nas rotas de login e registro
         if (request.getRequestURI().equals("/api/auth/register") || request.getRequestURI().equals("/api/auth/login")) {
