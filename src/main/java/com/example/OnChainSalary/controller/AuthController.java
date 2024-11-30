@@ -1,7 +1,5 @@
 package com.example.OnChainSalary.controller;
 
-
-
 import com.example.OnChainSalary.model.User;
 import com.example.OnChainSalary.service.UserService;
 import com.example.OnChainSalary.util.JwtUtil;
