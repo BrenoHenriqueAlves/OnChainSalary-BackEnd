@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/companies")
 public class CompanyController {
@@ -41,7 +42,8 @@ public class CompanyController {
         }
 
         // Se não existir, prossegue com a criação da empresa
-        User representative = userService.findByEmail(authentication.getName());
+        User representative = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
         company.setRepresentative(representative);
         Company savedCompany = companyService.addCompany(company);
 
@@ -49,11 +51,11 @@ public class CompanyController {
         return ResponseEntity.status(201).body(savedCompany);
     }
 
-
     // Rota para listar as empresas onde o usuário logado é representante
     @GetMapping("/list-representative")
     public ResponseEntity<List<Company>> getCompaniesByRepresentative(Authentication authentication) {
-        User authenticatedUser = userService.findByEmail(authentication.getName());
+        User authenticatedUser = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
         List<Company> companies = companyService.getCompaniesByRepresentative(authenticatedUser.getId());
         return ResponseEntity.ok(companies);
     }
@@ -61,7 +63,8 @@ public class CompanyController {
     // Rota para listar as empresas onde o usuário logado é funcionário
     @GetMapping("/list-employee")
     public ResponseEntity<List<Company>> getCompaniesByEmployee(Authentication authentication) {
-        User authenticatedUser = userService.findByEmail(authentication.getName());
+        User authenticatedUser = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
         List<Company> companies = employeeCompanyService.getCompaniesByEmployee(authenticatedUser.getId());
         return ResponseEntity.ok(companies);
     }
@@ -89,7 +92,8 @@ public class CompanyController {
             Company company = companyOptional.get();
 
             // Verifica se o usuário autenticado é o representante da empresa
-            User authenticatedUser = userService.findByEmail(authentication.getName());
+            User authenticatedUser = userService.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
             if (!company.getRepresentative().getId().equals(authenticatedUser.getId())) {
                 return ResponseEntity.status(403).body("Você não tem permissão para adicionar funcionários a esta empresa.");
             }
@@ -105,6 +109,4 @@ public class CompanyController {
             return ResponseEntity.status(400).body(ex.getMessage());
         }
     }
-
-
 }

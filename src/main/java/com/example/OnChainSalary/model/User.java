@@ -24,6 +24,10 @@ public class User {
     @Column(nullable = true) // Coluna opcional, já que o endereço não será informado no cadastro
     private String ethereumAddress;
 
+    // Construtor sem argumentos necessário para o Hibernate
+    public User() {
+    }
+
     // Getters e setters
     public UUID getId() {
         return id;
@@ -77,4 +81,12 @@ public class User {
     public int hashCode() {
         return Objects.hash(email);
     }
+
+    // Construtor com parâmetros, como você já tinha
+    public User(String email, String password, String name) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+    }
+
 }
