@@ -1,23 +1,41 @@
 package com.example.OnChainSalary.util;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct; // Atualizado para Jakarta
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
+import java.util.Base64;
+import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private final Key secretKey;
+    private Key secretKey;
 
-    public JwtUtil() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    @Value("${spring.security.jwt.secret}")
+    private String secret;
+
+    @Value("${spring.security.jwt.expiration}")
+    private long expirationTime; // Tempo de expiração em milissegundos
+
+    @PostConstruct
+    public void init() {
+        // Decodifica a chave base64 e a converte para um formato que o JWT pode usar.
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        this.secretKey = new SecretKeySpec(decodedKey, SignatureAlgorithm.HS512.getJcaName());
     }
 
     public String generateToken(String email) {
+        long now = System.currentTimeMillis();
+        Date expirationDate = new Date(now + expirationTime); // Define a data de expiração
+
         return Jwts.builder()
                 .setSubject(email)
+                .setIssuedAt(new Date(now)) // Data de emissão
+                .setExpiration(expirationDate) // Data de expiração
                 .signWith(secretKey)
                 .compact();
     }

@@ -56,4 +56,8 @@ public class EmployeeCompanyService {
                 .collect(Collectors.toList());
     }
 
+
+    // Método para listar as empresas nas quais o usuário é empregado
+
+
 }

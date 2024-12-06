@@ -109,4 +109,16 @@ public class CompanyController {
             return ResponseEntity.status(400).body(ex.getMessage());
         }
     }
+    @GetMapping("/list")
+    public ResponseEntity<?> getUserCompanies(Authentication authentication) {
+        // Obtém o usuário autenticado
+        User authenticatedUser = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Obtém as empresas onde o usuário é o representante
+        List<Company> representativeCompanies = companyService.getCompaniesByRepresentative(authenticatedUser.getId());
+
+        // Retorna apenas as empresas em que o usuário é o representante
+        return ResponseEntity.ok(representativeCompanies);
+    }
 }

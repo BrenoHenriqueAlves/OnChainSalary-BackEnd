@@ -1,5 +1,6 @@
 package com.example.OnChainSalary.repository;
 
+import com.example.OnChainSalary.model.Company;
 import com.example.OnChainSalary.model.EmployeeCompany;
 import com.example.OnChainSalary.model.EmployeeCompanyId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,6 @@ public interface EmployeeCompanyRepository extends JpaRepository<EmployeeCompany
     // Método que encontra todos os registros de EmployeeCompany para um determinado User (funcionário)
     List<EmployeeCompany> findByUserId(UUID userId);
     Optional<EmployeeCompany> findByUserIdAndCompanyId(UUID userId, UUID companyId);
-
+    List<Company> findCompaniesByUserId(UUID userId);
 
 }
