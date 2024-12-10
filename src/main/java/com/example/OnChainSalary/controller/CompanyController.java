@@ -72,9 +72,23 @@ public class CompanyController {
     // Rota para deletar uma empresa
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteCompany(@PathVariable UUID id) {
+        // Verificar se a empresa tem funcionários
+        List<EmployeeCompany> employees = employeeCompanyService.getEmployeesByCompany(id);
+
+        // Se tiver funcionários, removê-los primeiro
+        if (!employees.isEmpty()) {
+            // Remover todos os funcionários da empresa
+            for (EmployeeCompany employeeCompany : employees) {
+                employeeCompanyService.removeEmployeeFromCompany(employeeCompany.getUser().getId(), id);
+            }
+        }
+
+        // Depois que os funcionários foram removidos, excluir a empresa
         companyService.deleteCompany(id);
+
         return ResponseEntity.ok("Company deleted successfully");
     }
+
 
     // Rota para adicionar um funcionário à empresa
     @PostMapping("/add-employee")
@@ -99,16 +113,18 @@ public class CompanyController {
             }
 
             // Adiciona o funcionário à empresa
-            EmployeeCompany employeeCompany = employeeCompanyService.addEmployeeToCompany(
+            employeeCompanyService.addEmployeeToCompany(
                     employeeRequestDTO.getUserId(), companyId, employeeRequestDTO.getRole(), employeeRequestDTO.getSalary());
 
-            return ResponseEntity.ok(employeeCompany);
+            // Retorna apenas uma mensagem de sucesso
+            return ResponseEntity.ok("Funcionário adicionado com sucesso.");
 
         } catch (RuntimeException ex) {
             // Se for uma exceção do tipo RuntimeException (como funcionário já cadastrado)
             return ResponseEntity.status(400).body(ex.getMessage());
         }
     }
+
     @GetMapping("/list")
     public ResponseEntity<?> getUserCompanies(Authentication authentication) {
         // Obtém o usuário autenticado
@@ -120,5 +136,61 @@ public class CompanyController {
 
         // Retorna apenas as empresas em que o usuário é o representante
         return ResponseEntity.ok(representativeCompanies);
+    }
+
+
+    // Rota para listar os funcionários de uma empresa
+    @GetMapping("/{companyId}/employees")
+    public ResponseEntity<?> getEmployeesOfCompany(@PathVariable UUID companyId, Authentication authentication) {
+        // Verifica o usuário autenticado
+        User authenticatedUser = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Verifica se o usuário é representante da empresa
+        Company company = companyService.getCompanyById(companyId)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada."));
+        if (!company.getRepresentative().getId().equals(authenticatedUser.getId())) {
+            return ResponseEntity.status(403).body("Você não tem permissão para acessar os funcionários desta empresa.");
+        }
+
+        // Obtém os funcionários da empresa
+        List<EmployeeCompany> employees = employeeCompanyService.getEmployeesByCompany(companyId);
+
+        // Mapeia para o formato de resposta
+        List<?> employeeDetails = employees.stream().map(employeeCompany -> {
+            User user = employeeCompany.getUser();
+            return new Object() {
+                public final UUID id = user.getId();
+                public final String name = user.getName();
+                public final String email = user.getEmail();
+                public final String role = employeeCompany.getRole();
+                public final BigDecimal salary = employeeCompany.getSalary();
+            };
+        }).toList();
+
+        return ResponseEntity.ok(employeeDetails);
+    }
+
+    // Rota para remover um funcionário de uma empresa
+    @DeleteMapping("/{companyId}/remove-employee/{employeeId}")
+    public ResponseEntity<?> removeEmployeeFromCompany(@PathVariable UUID companyId, @PathVariable UUID employeeId, Authentication authentication) {
+        // Verifica o usuário autenticado
+        User authenticatedUser = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Verifica se o usuário é representante da empresa
+        Company company = companyService.getCompanyById(companyId)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada."));
+        if (!company.getRepresentative().getId().equals(authenticatedUser.getId())) {
+            return ResponseEntity.status(403).body("Você não tem permissão para remover funcionários desta empresa.");
+        }
+
+        // Remove o funcionário da empresa
+        try {
+            employeeCompanyService.removeEmployeeFromCompany(employeeId, companyId);
+            return ResponseEntity.ok("Funcionário removido com sucesso.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
     }
 }

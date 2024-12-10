@@ -58,6 +58,20 @@ public class EmployeeCompanyService {
 
 
     // Método para listar as empresas nas quais o usuário é empregado
+    // Lista os funcionários de uma empresa
+    public List<EmployeeCompany> getEmployeesByCompany(UUID companyId) {
+        return employeeCompanyRepository.findByCompanyId(companyId);
+    }
 
+    // Remove um funcionário de uma empresa
+    public void removeEmployeeFromCompany(UUID userId, UUID companyId) {
+        Optional<EmployeeCompany> employeeCompany = employeeCompanyRepository.findByUserIdAndCompanyId(userId, companyId);
+
+        if (employeeCompany.isEmpty()) {
+            throw new RuntimeException("Funcionário não encontrado na empresa.");
+        }
+
+        employeeCompanyRepository.delete(employeeCompany.get());
+    }
 
 }
