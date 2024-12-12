@@ -56,6 +56,39 @@ public class UserController {
         }
     }
 
+    @PostMapping("/get-ethereum-address")
+    public ResponseEntity<?> getEthereumAddress(@RequestBody Map<String, String> request, Authentication authentication) {
+        // O email é enviado no corpo da requisição
+        String email = request.get("email");
+
+        // Verifica se o usuário está autenticado
+        String authenticatedEmail = authentication.getName();
+
+        if (authenticatedEmail == null || authenticatedEmail.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Usuário não autenticado."));
+        }
+
+        // Verifica se o usuário autenticado é o mesmo que está sendo buscado
+//        if (!authenticatedEmail.equals(email)) {
+//            return ResponseEntity.status(403).body(Map.of("message", "Você não tem permissão para acessar este endereço Ethereum."));
+//        }
+
+        // Busca o usuário pelo email
+        Optional<User> userOptional = userService.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Verifica se o usuário tem um endereço Ethereum
+            if (user.getEthereumAddress() != null && !user.getEthereumAddress().isEmpty()) {
+                return ResponseEntity.ok(Map.of("ethereumAddress", user.getEthereumAddress()));
+            } else {
+                return ResponseEntity.status(404).body(Map.of("message", "Endereço Ethereum não encontrado."));
+            }
+        } else {
+            return ResponseEntity.status(404).body(Map.of("message", "Usuário não encontrado."));
+        }
+    }
+
+
 
     public class ResponseError {
         private String message;
