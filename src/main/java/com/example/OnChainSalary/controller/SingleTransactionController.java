@@ -100,15 +100,7 @@ public class SingleTransactionController {
     @PatchMapping("/{id}/update-fee")
     public ResponseEntity<?> updateTransactionFee(
             @PathVariable UUID id,
-            @RequestBody Map<String, BigDecimal> requestBody) {
-        // Verifica se o campo transactionFee foi enviado no corpo da requisição
-        if (!requestBody.containsKey("transactionFee")) {
-            return ResponseEntity.status(400).body("Missing 'transactionFee' in the request body.");
-        }
-
-        BigDecimal transactionFee = requestBody.get("transactionFee");
-
-        // Busca a transação no banco de dados
+            @RequestBody Map<String, Object> requestBody) {
         Optional<SingleTransaction> transactionOptional = transactionService.getTransactionById(id);
 
         if (transactionOptional.isEmpty()) {
@@ -116,12 +108,25 @@ public class SingleTransactionController {
         }
 
         SingleTransaction transaction = transactionOptional.get();
-        transaction.setTransactionFee(transactionFee);
 
-        // Atualiza e salva a transação
+        // Verifica se a chave "transactionFee" existe no JSON
+        if (!requestBody.containsKey("transactionFee")) {
+            return ResponseEntity.status(400).body("Transaction fee is required.");
+        }
+
+        // Atualiza o transactionFee e o status
+        try {
+            BigDecimal transactionFee = new BigDecimal(requestBody.get("transactionFee").toString());
+            transaction.setTransactionFee(transactionFee);
+            transaction.setStatus("Success");
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(400).body("Invalid transaction fee format.");
+        }
+
         SingleTransaction updatedTransaction = transactionService.addTransaction(transaction);
         return ResponseEntity.ok(updatedTransaction);
     }
+
 
 
 
